@@ -39,7 +39,7 @@ The plugin name stays `pstack` on purpose. The skills refer to each other as `ps
 ```bash
 scripts/sync-upstream.sh   # commits the latest upstream tree to the `upstream` branch
 git merge upstream         # on main; resolve conflicts if any
-git push
+git push origin main upstream
 ```
 
 Then run `/plugin marketplace update karashizuke-pstack` in Claude Code, or turn on auto-update for this marketplace.
