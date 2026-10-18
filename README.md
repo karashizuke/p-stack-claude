@@ -57,6 +57,7 @@ The script exits with no commit when upstream has not changed.
 | File | Change | Why |
 | --- | --- | --- |
 | `hooks/hooks.json`, `hooks/session-start-context.md` | Added. A `SessionStart` hook that injects routing rules into each session: use `pstack:poteto-mode` for multi-file, design, or unknown-cause tasks. | The upstream Claude Code tree has no hooks, so nothing tells the agent to use pstack. The text comes from [michael-denyer/pstack-claude](https://github.com/michael-denyer/pstack-claude) (MIT). |
+| `skills/setup-pstack/SKILL.md` (step 5) | The panel defaults are `opus xhigh, fable xhigh`, with `sonnet xhigh` added to `interrogate reviewers`. | In Claude Code the upstream `grok-4.7-xhigh-fast` panel seat becomes the parent model, so the panel ran Opus twice. Haiku never helped and Sonnet design candidates were never picked. |
 
 ## License
 
