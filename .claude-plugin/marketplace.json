@@ -1,0 +1,13 @@
+{
+  "name": "karashizuke-pstack",
+  "owner": {
+    "name": "karashizuke"
+  },
+  "plugins": [
+    {
+      "name": "pstack",
+      "source": "./",
+      "description": "Personal Claude Code fork of pstack (cursor/plugins), synced from upstream with local modifications."
+    }
+  ]
+}
