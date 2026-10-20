@@ -1,8 +1,8 @@
 import type { EngineInterface } from 'claude-code'
 import { sureOf } from '../judge'
 import { family, modelName, stripTag } from '../roles'
-import { JUDGE_NAMES } from '../settings'
-import { agents, live, main, phase, skills, ui } from '../state'
+import { JUDGE_NAMES, judgeName } from '../settings'
+import { agents, live, main, phase, shownEffort, skills, ui } from '../state'
 import { t } from './text'
 
 export type Snapshot = {
@@ -17,11 +17,13 @@ export type Snapshot = {
 }
 
 const autoWord = (a: Snapshot['auto']) => (a === 'judging' ? t('band.judging') : a === 'down' ? t('band.judgeDown') : a)
-export const AUTO_SHORT = { on: 'A', off: 'A-', judging: 'A…', down: 'A?' } as const
+const AUTO_SHORT = { on: 'A', off: 'A-', judging: 'A…', down: 'A?' } as const
 
 // Width of the "  ⚠ pstack: " prefix the engine puts before the line.
 const PREFIX = 12
 const WIDE = /[\u1100-\u115f\u2e80-\u303e\u3041-\u33ff\u3400-\u4dbf\u4e00-\u9fff\ua000-\ua4cf\uac00-\ud7a3\uf900-\ufaff\ufe30-\ufe4f\uff00-\uff60\uffe0-\uffe6]/
+export const agentCount = (n: number) => t(n === 1 ? 'band.agent' : 'band.agents', { n })
+export const errMessage = (err: unknown) => (err instanceof Error ? err.message : String(err))
 export const cells = (str: string) => [...str].reduce((n, c) => n + (WIDE.test(c) ? 2 : 1), 0)
 
 type Parts = { judge: boolean; progress: boolean; agents: boolean; skill: boolean; phase?: string; shortAuto: boolean }
@@ -30,7 +32,7 @@ function line(s: Snapshot, p: Parts): string {
   const phase = p.phase && (p.progress && s.phase ? `${p.phase} ${s.phase.index}/${s.phase.total}` : p.phase)
   const where = [p.skill && s.skill, phase].filter(Boolean).join(' › ')
   const auto = p.shortAuto ? AUTO_SHORT[s.auto] : `Auto ${autoWord(s.auto)}${p.judge && s.judge && s.auto !== 'off' ? ` (${s.judge})` : ''}`
-  const count = p.agents && s.skill ? `${s.agents} agent${s.agents === 1 ? '' : 's'}` : ''
+  const count = p.agents && s.skill ? agentCount(s.agents) : ''
   return [where, [s.model, s.main ?? '?'].filter(Boolean).join(' '), auto, count].filter(Boolean).join(' · ')
 }
 
@@ -70,7 +72,7 @@ export function snapshot(): Snapshot {
   return {
     skill: skills.current()?.name,
     phase: phase.current(),
-    main: main.sent ?? main.decided?.effort ?? undefined,
+    main: shownEffort(main),
     model: modelName(main.model),
     auto: !s.auto ? 'off' : main.judging ? 'judging' : main.judgeDown ? 'down' : 'on',
     judge: JUDGE_NAMES[s.judge.provider],
@@ -93,10 +95,10 @@ export function whyText(): string {
   if (d?.rank === 4) return t('why.default', { skill: skills.current()?.name ?? '' })
   if (d?.rank === 5) {
     if (d.by === 'named') return t('why.named')
-    const head = t('why.judge', { judge: JUDGE_NAMES[d.by ?? ''] ?? d.by, confidence: sureOf(d.by, d.confidence) }).trim()
+    const head = t('why.judge', { judge: judgeName(d.by ?? ''), confidence: sureOf(d.by, d.confidence) }).trim()
     return j?.why ? `${head}: ${j.why}` : head
   }
-  if (j && d?.rank === 'parent') return t('why.unsure', { judge: JUDGE_NAMES[j.by] ?? j.by, confidence: j.confidence.toFixed(2), threshold: s.judge.threshold })
+  if (j && d?.rank === 'parent') return t('why.unsure', { judge: judgeName(j.by), confidence: j.confidence.toFixed(2), threshold: s.judge.threshold })
   return t('why.next')
 }
 

@@ -1,5 +1,5 @@
 import type { RoleLine } from './roles'
-import { EFFORTS, type Decision, type Effort } from './types'
+import { EFFORTS, rankOf as at, type Decision, type Effort } from './types'
 
 export type LadderInput = {
   who: 'main' | 'sub'
@@ -16,7 +16,7 @@ export type LadderInput = {
   danger?: boolean   // raises ranks 4 and 5 to at least high
 }
 
-export const DANGER_WORDS = [
+const DANGER_WORDS = [
   'deploy', 'デプロイ', 'rm -rf', 'drop table', 'drop database', 'force push', 'push --force',
   '削除', '課金', 'billing', '本番', 'production',
 ]
@@ -27,7 +27,6 @@ const DANGER_RE = new RegExp(
 )
 export const isDangerous = (text: string) => DANGER_RE.test(text)
 
-const at = (e: Effort) => EFFORTS.indexOf(e)
 const clamp = (e: Effort, lo: Effort, hi: Effort): Effort => EFFORTS[Math.min(Math.max(at(e), at(lo)), at(hi))]
 // Danger overrides the ceiling.
 const guess = (e: Effort, i: LadderInput): Effort => {

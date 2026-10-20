@@ -5,3 +5,5 @@ export type Decision = { effort: Effort | null; rank: Rank; by?: string; confide
 
 export const EFFORTS: readonly Effort[] = ['low', 'medium', 'high', 'xhigh', 'max']
 export const isEffort = (v: unknown): v is Effort => EFFORTS.includes(v as Effort)
+/** Position on the ladder, low first: compare two efforts with it. */
+export const rankOf = (e: Effort) => EFFORTS.indexOf(e)

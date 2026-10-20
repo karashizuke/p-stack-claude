@@ -4,7 +4,7 @@ import { CARDS, CARDS_HOME, helpLines, PROVIDER_NAMES, saveSetting } from './set
 import { modelName, stripTag } from './roles'
 import { agents, main, ui } from './state'
 import { openPane } from './ui/pane'
-import { toast } from './ui/status'
+import { errMessage, toast } from './ui/status'
 import { openAgent } from './ui/viewing'
 import { t } from './ui/text'
 import type { Effort } from './types'
@@ -61,7 +61,7 @@ export async function runCommand($: EngineInterface, args: string): Promise<{ te
     if (verb === 'bench') {
       if (benching) return { text: t('msg.benchRunning') }
       const file = JSON.parse(String(await $.fs.read(`${$.plugin.root.replace(/\/$/, '')}/tests/judge-cases.ja.json`))) as { cases: { message: string; ok: Effort[] }[] }
-      const cases: BenchCase[] = file.cases.map(c => ({ text: c.message, want: c.ok[0], ok: c.ok }))
+      const cases: BenchCase[] = file.cases.map(c => ({ text: c.message, ok: c.ok }))
       const unknown = rest.filter(p => !(PROVIDER_NAMES as readonly string[]).includes(p))
       if (unknown.length) return { text: t('msg.unknownJudge', { names: unknown.join(', '), judges: PROVIDER_NAMES.join(', ') }), failed: true }
       const providers = rest.length ? rest : [...PROVIDER_NAMES]
@@ -69,7 +69,7 @@ export async function runCommand($: EngineInterface, args: string): Promise<{ te
       $.clock.after(0, () =>
         void runBench($, cases, providers)
           .then(rows => benchTable(rows, main.settings.judge.threshold).split('\n').forEach(l => $.ui.log(l)))   // newlines do not render in one log line
-          .catch(err => toast($, t('msg.benchFailed', { error: err instanceof Error ? err.message : String(err) })))
+          .catch(err => toast($, t('msg.benchFailed', { error: errMessage(err) })))
           .finally(() => (benching = false)),
       )
       benching = true
@@ -82,6 +82,6 @@ export async function runCommand($: EngineInterface, args: string): Promise<{ te
     }
     return { text: help() }
   } catch (err) {
-    return { text: err instanceof Error ? err.message : String(err), failed: true }
+    return { text: errMessage(err), failed: true }
   }
 }
