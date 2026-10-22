@@ -13,3 +13,5 @@ When the intent is already specific, enter that skill directly: `pstack:tdd`, `p
 
 User instructions (CLAUDE.md, AGENTS.md, direct requests) take precedence. Other session-start mandates, such as superpowers, still apply. Their skill checks run as before, and when a task meets the criteria above they route implementation through poteto-mode.
 </EXTREMELY_IMPORTANT>
+
+When a pstack skill starts a subagent with the Agent tool, begin its `description` with the role name in brackets, exactly as the text before the colon in `~/.claude/rules/pstack-models.md` (for example `[interrogate reviewers] Reviewer A`). Use a role name even when that file has no line for it (for example `[verifier] Mac checks`).

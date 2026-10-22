@@ -1,0 +1,455 @@
+{
+  "about": "Japanese labelled prompts for /pstack-effort bench, in effortless's bench/judge-cases.json shape. `ok` lists every effort a careful person would accept; the first is the cheapest. Short replies (isShortReply) are skipped, as the mod never judges them.",
+  "cases": [
+    {
+      "id": "j01",
+      "kind": "trivial",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "cp の -r オプションって何をするの？",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j02",
+      "kind": "trivial",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "auth.ts の変数 usr を user にリネームして",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j03",
+      "kind": "trivial",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "README のタイトルが「インストルール」になってるので「インストール」に直して",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j04",
+      "kind": "trivial",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "package.json の version を 1.4.2 に上げて",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j05",
+      "kind": "trivial",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "このファイルの末尾に改行を足しておいて",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j06",
+      "kind": "trivial",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "git で直前のコミットメッセージだけ直す方法を教えて",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j07",
+      "kind": "trivial",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "TypeScript の unknown と any の違いを一言で",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j08",
+      "kind": "short",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "はい",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j09",
+      "kind": "short",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "OK、お願いします",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j10",
+      "kind": "short",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "ありがとう、うまく動きました！助かりました",
+      "ok": [
+        "low"
+      ]
+    },
+    {
+      "id": "j11",
+      "kind": "short",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "了解です、その方針でそのまま進めてください",
+      "ok": [
+        "low",
+        "medium"
+      ]
+    },
+    {
+      "id": "j12",
+      "kind": "short",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "さっきの案の2番目でいきましょう",
+      "ok": [
+        "low",
+        "medium"
+      ]
+    },
+    {
+      "id": "j13",
+      "kind": "normal",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "utils/date.ts に日付を YYYY-MM-DD で返す関数 formatDate を足して、テストも1つ書いて",
+      "ok": [
+        "medium"
+      ]
+    },
+    {
+      "id": "j14",
+      "kind": "normal",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "ログイン画面のボタンが押せないことがある。LoginForm.tsx を見て原因を探して直して",
+      "ok": [
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "id": "j15",
+      "kind": "normal",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "この関数の for ループを map と filter で書き直して",
+      "ok": [
+        "low",
+        "medium"
+      ]
+    },
+    {
+      "id": "j16",
+      "kind": "normal",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "API のレスポンスに createdAt を足して、型とテストも合わせて",
+      "ok": [
+        "medium"
+      ]
+    },
+    {
+      "id": "j17",
+      "kind": "normal",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "CI の lint が落ちている。エラーを見て直して",
+      "ok": [
+        "medium"
+      ]
+    },
+    {
+      "id": "j18",
+      "kind": "normal",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "config.yaml の読み込みで、キーが無いときに既定値を使うようにして",
+      "ok": [
+        "medium"
+      ]
+    },
+    {
+      "id": "j19",
+      "kind": "normal",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "この SQL がなぜ遅いのか EXPLAIN の結果から説明して、インデックスを提案して",
+      "ok": [
+        "medium",
+        "high"
+      ]
+    },
+    {
+      "id": "j20",
+      "kind": "normal",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "React のコンポーネント UserCard を、props の型を付けて別ファイルに切り出して",
+      "ok": [
+        "medium"
+      ]
+    },
+    {
+      "id": "j21",
+      "kind": "hard",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "決済モジュールを Stripe の新しい API に移行して。既存のテストが全部通るように、Webhook の処理も合わせて直して",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j22",
+      "kind": "hard",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "モノレポ全体で、古い logger を新しい構造化ログのライブラリに置き換えて。30 個くらいのパッケージにまたがる",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j23",
+      "kind": "hard",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "並列で動かすと時々テストが落ちる。競合状態がどこにあるか調べて、直して、再発しないテストを書いて",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j24",
+      "kind": "hard",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "認証を session cookie から JWT に変えたい。設計を考えて、移行の手順と実装まで進めて",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j25",
+      "kind": "hard",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "このサービスのメモリリークを調べて。ヒープのスナップショットを取って原因を突き止めて直して",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j26",
+      "kind": "hard",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "GraphQL のスキーマを分割して、N+1 を DataLoader で解消して、性能を測って",
+      "ok": [
+        "high"
+      ]
+    },
+    {
+      "id": "j27",
+      "kind": "research",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "この分散 KV ストアの合意アルゴリズムに、ネットワーク分断時に線形化可能性が崩れるバグがないか、TLA+ で検証して",
+      "ok": [
+        "xhigh",
+        "max"
+      ]
+    },
+    {
+      "id": "j28",
+      "kind": "research",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "コンパイラの最適化パスで、まれに誤ったコードを生成する原因を、IR の差分を見ながら突き止めて直して",
+      "ok": [
+        "xhigh",
+        "max"
+      ]
+    },
+    {
+      "id": "j29",
+      "kind": "research",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "新しいキャッシュの置き換え方式を設計して、既存の LRU と比べるベンチマークを作り、論文の手法と比べて評価して",
+      "ok": [
+        "xhigh",
+        "max"
+      ]
+    },
+    {
+      "id": "j30",
+      "kind": "danger",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "本番のデータベースに migration を流して、終わったらデプロイして",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j31",
+      "kind": "danger",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "S3 の古いバケットを全部消して。どれが使われているか確かめてから",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j32",
+      "kind": "danger",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "課金のプランを変える API を叩いて、全ユーザーの請求額を再計算して",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j33",
+      "kind": "danger",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "main ブランチに force push して履歴を書き換えて",
+      "ok": [
+        "high"
+      ]
+    },
+    {
+      "id": "j34",
+      "kind": "danger",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "Kubernetes の本番クラスタのノードを 1 台ずつ入れ替えて",
+      "ok": [
+        "high",
+        "xhigh"
+      ]
+    },
+    {
+      "id": "j35",
+      "kind": "danger",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "rm -rf で build ディレクトリを消して、きれいにビルドし直して",
+      "ok": [
+        "low",
+        "medium"
+      ]
+    },
+    {
+      "id": "j36",
+      "kind": "danger",
+      "current": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "message": "本番の環境変数の API キーを新しいものに入れ替えて、再起動して",
+      "ok": [
+        "high"
+      ]
+    }
+  ]
+}
