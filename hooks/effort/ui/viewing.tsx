@@ -2,10 +2,10 @@ import type { EngineInterface, RenderChildren, RenderInput, SiteView, Timer } fr
 import { modelName, stripTag } from '../roles'
 import { ART_COLUMNS, buttonCells, EFFORT_COLOR, frame, VIEW_BG, VIEW_EDGE, VIEW_TEXT } from './art'
 import { agents, live, ui, type UiState } from '../state'
-import { cells, redraw, toast } from './status'
+import { cells, errMessage, redraw, toast } from './status'
 import { t } from './text'
 
-const errText = (err: unknown) => ({ deny: err instanceof Error ? err.message : String(err) })
+const errText = (err: unknown) => ({ deny: errMessage(err) })
 
 export function change($: EngineInterface, patch: Partial<UiState>) {
   if (patch.tab === 'settings') {

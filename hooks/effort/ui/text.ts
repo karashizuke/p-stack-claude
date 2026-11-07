@@ -121,7 +121,6 @@ const TEXT = {
   'err.hideDone': { en: 'hideDone takes a whole number of minutes, 0 to 1440.', ja: 'hideDone は 0 から 1440 の整数（分）です。' },
   'err.threshold': { en: 'judge.threshold takes a number from 0 to 1.', ja: 'judge.threshold は 0 から 1 の数です。' },
   'err.timeout': { en: 'judge.timeoutMs takes a whole number of milliseconds, 1 to 5000.', ja: 'judge.timeoutMs は 1 から 5000 の整数（ミリ秒）です。' },
-  'err.onFail': { en: 'judge.onFail takes parent or haiku.', ja: 'judge.onFail は parent か haiku です。' },
   'err.url': { en: 'judge.url takes an https URL, or http only for 127.0.0.1, localhost or ::1.', ja: 'judge.url は https の URL です（http は 127.0.0.1、localhost、::1 だけ）。' },
   'err.unknown': { en: 'Unknown setting "{key}". Settings: {keys}.', ja: '不明な設定 "{key}"。設定: {keys}。' },
   'err.nothing': { en: 'nothing', ja: 'なし' },

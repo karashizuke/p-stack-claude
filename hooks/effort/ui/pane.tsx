@@ -2,9 +2,9 @@ import type { EngineInterface, RenderChildren, RenderInput, UiOpenResult } from 
 import { family, modelName, stripTag } from '../roles'
 import { CARD_EDGE, EFFORT_COLOR, MODEL_COLOR, STATE_COLOR, VIEW_TEXT, WAIT_BG, WAIT_TEXT } from './art'
 import { CARDS, saveSetting, shownRows, valueOf, type Row } from '../settings'
-import { agents, live, main, phase, skills, ui, type AgentRec, type UiState } from '../state'
+import { agents, argOf, live, main, phase, shownEffort, skills, ui, type AgentRec, type UiState } from '../state'
 import { effortText, took } from './row'
-import { redraw, toast } from './status'
+import { errMessage, redraw, toast } from './status'
 import { t } from './text'
 import { change, closePeek, openAgent, showPeek, syncView } from './viewing'
 
@@ -17,7 +17,6 @@ const RAIL: Record<string, string> = { completed: '✓', in_progress: '▶' }
 
 const nameOf = (r: AgentRec) => stripTag(r.description)
 const effortOf = (r: AgentRec) => (r.status === 'judging' ? t('pane.judging') : effortText(r))
-const wordOf = (r: AgentRec) => r.sent ?? r.decided?.effort ?? undefined
 const clip = (text: string, n: number) => (text.length > n ? `${text.slice(0, n - 1)}…` : text)
 const picked = (r: AgentRec) => !!r.agentId && (ui.peek === r.agentId || ui.viewing === r.agentId)
 const ago = (r: AgentRec) => took((r.endedAt ?? Date.now()) - r.startedAt)
@@ -49,16 +48,14 @@ function pick($: EngineInterface, r: AgentRec) {
   }
 }
 
-const arg = (input: Record<string, unknown>) =>
-  String(input.description ?? input.command ?? input.file_path ?? input.pattern ?? input.query ?? '').split('\n')[0].slice(0, 60)
-
 type Row1 = { role: string; text?: string; toolUses?: { tool: string; input: Record<string, unknown> }[] }
-const lastSaid = (rows: unknown) =>
-  (Array.isArray(rows) ? (rows as Row1[]) : []).filter(m => m.role === 'assistant' && m.text).at(-1)?.text?.replace(/\s+/g, ' ').slice(0, 80)
+const lastSaid = (rows: readonly Row1[]) =>
+  rows.filter(m => m.role === 'assistant' && m.text).at(-1)?.text?.replace(/\s+/g, ' ').slice(0, 80)
 /** A card's last line: what the agent last said, else its last tool call (an agent that answers by a tool says nothing). */
-function lastLine(rows: unknown): string | undefined {
-  const use = (Array.isArray(rows) ? (rows as Row1[]) : []).flatMap(m => m.toolUses ?? []).at(-1)
-  const said = typeof use?.input.message === 'string' ? use.input.message.replace(/\s+/g, ' ').slice(0, 80) : use && `${use.tool} ${arg(use.input)}`.trim()
+function lastLine(got: unknown): string | undefined {
+  const rows = Array.isArray(got) ? (got as Row1[]) : []
+  const use = rows.flatMap(m => m.toolUses ?? []).at(-1)
+  const said = typeof use?.input.message === 'string' ? use.input.message.replace(/\s+/g, ' ').slice(0, 80) : use && `${use.tool} ${argOf(use.input)}`.trim()
   return lastSaid(rows) ?? said
 }
 
@@ -73,7 +70,7 @@ async function peekBox($: EngineInterface, e: RenderInput<'Pane'>, id: string) {
     <Box key="peek" flexDirection="column" borderStyle="round" borderColor={CARD_EDGE} paddingX={1}>
       <Text bold>{rec ? nameOf(rec) : id}</Text>
       {!Array.isArray(got) && <Text dimColor>{got.deny}</Text>}
-      {uses.map(u => <Text dimColor wrap="truncate">{u.tool} {arg(u.input)}</Text>)}
+      {uses.map(u => <Text dimColor wrap="truncate">{u.tool} {argOf(u.input)}</Text>)}
       {said && <Text wrap="truncate">{said}</Text>}
       <Box flexDirection="row" gap={1}>
         <Button key="peek:open" variant="primary" onPress={() => openAgent($, id)}>{t('pane.open')}</Button>
@@ -109,7 +106,7 @@ function agentRow($: EngineInterface, e: RenderInput<'Pane'>, r: AgentRec) {
       {/* Only the role gives way; the facts on the right keep their width. */}
       <Box flexShrink={0} flexDirection="row" columnGap={1}>
         <Text dimColor>{family(r.model) ?? r.type}</Text>
-        <Text color={EFFORT_COLOR[wordOf(r) ?? '']}>{effortOf(r)}</Text>
+        <Text color={EFFORT_COLOR[shownEffort(r) ?? '']}>{effortOf(r)}</Text>
         <Text dimColor>{ago(r)}</Text>
         {ui.viewing === r.agentId && <Text color={VIEW_TEXT}>◉</Text>}
       </Box>
@@ -128,7 +125,7 @@ function agentCard($: EngineInterface, e: RenderInput<'Pane'>, r: AgentRec, widt
         <Box flexShrink={0}>{mark($, e, r)}</Box>
       </Box>
       <Text wrap="truncate">
-        <Text color={EFFORT_COLOR[wordOf(r) ?? '']}>{effortOf(r)}</Text> <Text dimColor>{ago(r)}</Text>
+        <Text color={EFFORT_COLOR[shownEffort(r) ?? '']}>{effortOf(r)}</Text> <Text dimColor>{ago(r)}</Text>
       </Text>
       <Text dimColor wrap="truncate">{said ?? ' '}</Text>
     </Box>
@@ -138,8 +135,9 @@ function agentCard($: EngineInterface, e: RenderInput<'Pane'>, r: AgentRec, widt
 async function board($: EngineInterface, e: RenderInput<'Pane'>, list: AgentRec[]) {
   const { Box, Text } = $.ui.resolve(e)
   const lines = main.roles.filter(l => list.some(r => r.role === l.role))
-  const rest = list.filter(r => !lines.some(l => l.role === r.role))
-  const carded = list.filter(r => r.agentId && lines.some(l => l.role === r.role))
+  const lined = new Set(lines.map(l => l.role))
+  const rest = list.filter(r => !lined.has(r.role ?? ''))
+  const carded = list.filter(r => r.agentId && lined.has(r.role ?? ''))
   // shortcut: reads each carded agent's conversation on every draw; cache by agent if boards grow past a handful.
   const said = new Map(await Promise.all(carded.map(async r => [r.toolUseId, lastLine(await $.session.messages({ agentId: r.agentId! }).catch(() => []))] as const)))
   const width = Math.max(16, Math.floor((e.props.bodyColumns - 1) / 2))
@@ -160,11 +158,13 @@ async function board($: EngineInterface, e: RenderInput<'Pane'>, list: AgentRec[
 function agentRows($: EngineInterface, e: RenderInput<'Pane'>, list: AgentRec[]): RenderChildren[] {
   const { Box, Text } = $.ui.resolve(e)
   const ids = new Set(list.map(r => r.agentId).filter(Boolean))
+  const children = new Map<string, AgentRec[]>()
+  for (const r of list) if (r.parent) children.set(r.parent, [...(children.get(r.parent) ?? []), r])
   const walk = (level: AgentRec[], lead: string): RenderChildren[] =>
     level.flatMap((r, i) => {
       const last = i === level.length - 1
       const under = `${lead}${last ? '  ' : '│ '}`
-      const kids = r.agentId ? list.filter(k => k.parent === r.agentId) : []
+      const kids = (r.agentId && children.get(r.agentId)) || []
       const doing = live(r) && (r.waiting ? { verb: 'needs approval', what: r.doing?.what ?? '' } : r.doing)
       return [
         <Box key={`tree:${r.toolUseId}`} flexDirection="row" {...(r.waiting ? { backgroundColor: WAIT_BG } : {})}>
@@ -217,10 +217,11 @@ async function crewTab($: EngineInterface, e: RenderInput<'Pane'>) {
     // A nested skill's rows all step in under its parent.
     return rows.filter(Boolean).map((el, n) => (d ? <Box key={`in:${i}:${n}`} paddingLeft={d * 2}>{el}</Box> : el))
   }))
-  const loose = list.filter(r => !r.skill || !skills.tree().some(s => s.name === r.skill))
+  const skillNames = new Set(skills.tree().map(s => s.name))
+  const loose = list.filter(r => !r.skill || !skillNames.has(r.skill))
   const used = new Set(all.map(r => r.role).filter(role => main.roles.some(l => l.role === role))).size
   // The main conversation's model and effort heads the list, with or without a pstack skill.
-  const top = main.sent ?? main.decided?.effort ?? undefined
+  const top = shownEffort(main)
   const head = main.model && (
     <Box key="crew:main" flexDirection="row" columnGap={1}>
       <Text color={MODEL_COLOR[family(main.model) ?? ''] ?? STATE_COLOR.running}>●</Text>
@@ -280,7 +281,7 @@ export async function saveDraft($: EngineInterface): Promise<boolean> {
     try {
       main.apply(key, await saveSetting($, key, value))
     } catch (err) {
-      toast($, err instanceof Error ? err.message : String(err))
+      toast($, errMessage(err))
       redraw($)
       return false
     }
@@ -321,7 +322,7 @@ function strip($: EngineInterface, e: RenderInput<'Pane'>) {
         <Box key={`strip:${r.toolUseId}`} flexDirection="row" columnGap={1}>
           {mark($, e, r)}
           <Button key={`agent:${r.toolUseId}`} plain onPress={() => r.agentId && openAgent($, r.agentId)}>{nameOf(r)}</Button>
-          <Text color={EFFORT_COLOR[wordOf(r) ?? '']}>{effortOf(r)}</Text>
+          <Text color={EFFORT_COLOR[shownEffort(r) ?? '']}>{effortOf(r)}</Text>
         </Box>
       ))}
     </Box>

@@ -2,12 +2,12 @@ import type { EngineInterface, RenderInput, Timer } from 'claude-code'
 import { runCommand } from '../commands'
 import { BAR, CARDS, CARDS_HOME, helpLines, shownRows, type Row, type Settings } from '../settings'
 import { family, stripTag } from '../roles'
-import { agents, live, main, ui } from '../state'
+import { agents, live, main, shownEffort, ui } from '../state'
 import { isEffort } from '../types'
 import { saveDraft, settingRow } from './pane'
-import { cells, redraw, snapshot, toast, whyText } from './status'
+import { agentCount, cells, redraw, snapshot, toast, whyText } from './status'
 import {
-  ART_COLUMNS, ART_FRAME_MS, ART_MIN_WIDTH, ART_ROWS, BAND_BG, BAND_TEXT, buttonCells, CARD_EDGE, EFFORT_COLOR, frame, MODEL_COLOR, MOVING, rasterFrame, svgSource,
+  ART_COLUMNS, ART_FRAME_MS, ART_MIN_WIDTH, ART_ROWS, BAND_BG, BAND_TEXT, buttonCells, CARD_EDGE, EFFORT_COLOR, frame, mixHex, MODEL_COLOR, MOVING, rasterFrame, svgSource,
   VIEW_TEXT, WAIT_TEXT, type ArtKind, type Critter,
 } from './art'
 import { took } from './row'
@@ -49,7 +49,8 @@ export function resetArt() {
   flashWord = flashAt = undefined
 }
 
-const dots = () => agents.all().filter(live).map(r => r.sent ?? r.decided?.effort).filter(isEffort).slice(0, ART_COLUMNS)
+const running = () => agents.all().filter(live)
+const dots = () => running().map(shownEffort).filter(isEffort).slice(0, ART_COLUMNS)
 // One critter per live agent, as many as the scene holds, coloured by model.
 const crew = (): Critter[] =>
   agents.all().filter(r => r.status === 'running').slice(0, 4).map(r => ({ color: MODEL_COLOR[family(r.model) ?? ''] ?? EFFORT_COLOR[r.sent ?? ''] ?? BAND_TEXT, waiting: !!r.waiting }))
@@ -123,8 +124,7 @@ function effortColor($: EngineInterface, word: string | undefined, judging: bool
   const since = flashAt === undefined ? Infinity : now - flashAt
   const k = [...FLASH_STEPS].reverse().find(([at]) => since >= at)?.[1] ?? 0
   if (!k || !base || main.settings.motion === 'none') return base
-  const ch = (h: string, i: number) => parseInt(h.slice(1 + i * 2, 3 + i * 2), 16)
-  return `#${[0, 1, 2].map(i => Math.round(ch(base, i) + (255 - ch(base, i)) * k).toString(16).padStart(2, '0')).join('')}`
+  return mixHex(base, '#ffffff', k)
 }
 
 // Terminal look per slot (effortless's dashboard); a slot not listed is a quiet plain button.
@@ -166,10 +166,9 @@ function slots($: EngineInterface, e: RenderInput<'AbovePrompt'>, term: boolean)
   ]
 }
 
-const running = () => agents.all().filter(live)
 function dotsOf($: EngineInterface, e: RenderInput<'AbovePrompt'>) {
   const { Text } = $.ui.resolve(e)
-  return running().map(r => <Text key={`dot:${r.toolUseId}`} color={EFFORT_COLOR[r.sent ?? r.decided?.effort ?? '']}>●</Text>)
+  return running().map(r => <Text key={`dot:${r.toolUseId}`} color={EFFORT_COLOR[shownEffort(r) ?? '']}>●</Text>)
 }
 
 /** Each live agent: its model-coloured mark, name and what it does now. */
@@ -282,7 +281,7 @@ function restBand($: EngineInterface, e: RenderInput<'AbovePrompt'>, rest: NonNu
       <Text color={STATE_DONE}>✦</Text>
       <Box flexShrink={1} minWidth={0}>
         <Text color={BAND_TEXT} wrap="truncate">
-          pstack · done · {rest.skill} {took(rest.ms)}{rest.agents ? ` · ${rest.agents} agent${rest.agents > 1 ? 's' : ''}` : ''}{snap.model ? ` · ${snap.model}` : ''}
+          pstack · done · {rest.skill} {took(rest.ms)}{rest.agents ? ` · ${agentCount(rest.agents)}` : ''}{snap.model ? ` · ${snap.model}` : ''}
         </Text>
       </Box>
       {snap.main ? <Text color={EFFORT_COLOR[snap.main]}>{snap.main}</Text> : null}

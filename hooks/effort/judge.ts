@@ -65,12 +65,18 @@ If the message is a short follow-up to ongoing work ("yes", "go", "ok", "continu
 
 Reply with JSON only: {"model":"haiku|sonnet|opus|fable","effort":"low|medium|high|xhigh|max","sure":0.0-1.0 how sure you are of the effort,"why":"at most 6 words, in the user's language"}`
 
-// The $.env.get name must be a string literal. Keys are never stored or logged.
-async function keyFor($: EngineInterface, p: Provider): Promise<string | undefined> {
+// The $.env.get name must be a string literal. Keys are never stored or logged; env vars do not change in a session, so each is asked once, in memory.
+const keys = new Map<Provider, Promise<string | undefined>>()
+function askKey($: EngineInterface, p: Provider): Promise<string | undefined> {
   if (p === 'kev') return $.env.get('KEV_API_KEY')
   if (p === 'jev') return $.env.get('TYPESAFE_API_KEY')
   if (p === 'jev-openrouter') return $.env.get('OPENROUTER_API_KEY')
-  return undefined
+  return Promise.resolve(undefined)
+}
+function keyFor($: EngineInterface, p: Provider) {
+  let k = keys.get(p)
+  if (!k) keys.set(p, (k = askKey($, p)))
+  return k
 }
 
 const isConfidence = (c: unknown): c is number => typeof c === 'number' && c >= 0 && c <= 1
@@ -205,8 +211,10 @@ export async function judge($: EngineInterface, text: string, s: Settings, signa
   if (signal.aborted) return null
   const quiet = await (askQuiet = askQuiet ?? $.env.get('CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC')).catch(() => undefined)
   const p = s.judge.provider
-  const first = p === 'haiku' || quiet ? null : await systemone($, p, text, s, signal, current, context)
-  if (first || (p !== 'haiku' && !quiet && s.judge.onFail !== 'haiku')) return first
+  if (p !== 'haiku' && !quiet) {
+    const v = await systemone($, p, text, s, signal, current, context)
+    if (v || s.judge.onFail !== 'haiku') return v
+  }
   return haiku($, text, signal, current, context).catch(() => null)
 }
 

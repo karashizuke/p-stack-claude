@@ -2,10 +2,10 @@ import type { EngineInterface } from 'claude-code'
 import { isFollowUp, judge, type Verdict } from './judge'
 import type { Provider, Settings } from './settings'
 import { main } from './state'
-import { EFFORTS, type Effort } from './types'
+import { rankOf, type Effort } from './types'
 import { t } from './ui/text'
 
-export type BenchCase = { text: string; want: Effort; ok?: Effort[] }
+export type BenchCase = { text: string; ok: Effort[] }
 /** none = no answer, conf = mean confidence, sure = hits at or above the threshold. */
 export type BenchRow = { provider: string; hit: number; low: number; high: number; p50ms: number; none: number; conf: number; sure: number; cases: number }
 
@@ -23,26 +23,25 @@ export async function runBench($: EngineInterface, cases: BenchCase[], providers
     const ask = (text: string, cfg: Settings) => judge($, text, cfg, signal).catch(() => null).then(v => (v?.by === provider ? v : null))
     // A judge that does not answer the probe question is treated as not running and skipped.
     if (!asked.length || !(await ask(asked[0].text, { ...s, judge: { ...s.judge, timeoutMs: PROBE_MS } }))) continue
-    const got: { c: BenchCase; v: Verdict | null; ms: number }[] = []
+    const grade = (ok: Effort[], v: Verdict | null) => {
+      if (!v) return 'none'
+      if (ok.includes(v.effort)) return 'hit'
+      return rankOf(v.effort) < Math.min(...ok.map(rankOf)) ? 'low' : 'high'
+    }
+    const got: { v: Verdict | null; ms: number; grade: string }[] = []
     for (const c of asked) {
       const t0 = Date.now()
       const v = await ask(c.text, s)
-      got.push({ c, v, ms: Date.now() - t0 })
+      got.push({ v, ms: Date.now() - t0, grade: grade(c.ok, v) })
     }
-    const grade = ({ c, v }: (typeof got)[number]) => {
-      const ok = c.ok ?? [c.want]
-      if (!v) return 'none'
-      if (ok.includes(v.effort)) return 'hit'
-      return EFFORTS.indexOf(v.effort) < Math.min(...ok.map(e => EFFORTS.indexOf(e))) ? 'low' : 'high'
-    }
-    const n = (k: string) => got.filter(g => grade(g) === k).length
+    const n = (k: string) => got.filter(g => g.grade === k).length
     const answered = got.filter(g => g.v)
     const ms = got.map(g => g.ms).sort((a, b) => a - b)
     rows.push({
       provider, hit: n('hit'), low: n('low'), high: n('high'), none: n('none'), cases: got.length,
       p50ms: ms[Math.floor(ms.length / 2)] ?? 0,
       conf: answered.length ? answered.reduce((acc, g) => acc + g.v!.confidence, 0) / answered.length : 0,
-      sure: got.filter(g => grade(g) === 'hit' && g.v!.confidence >= s.judge.threshold).length,
+      sure: got.filter(g => g.grade === 'hit' && g.v!.confidence >= s.judge.threshold).length,
     })
   }
   return rows

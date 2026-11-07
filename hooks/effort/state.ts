@@ -36,12 +36,16 @@ const VERB: Record<string, string> = {
   Read: 'reading', Grep: 'searching', Glob: 'searching', Edit: 'writing', Write: 'writing', NotebookEdit: 'writing',
   Bash: 'running', WebFetch: 'browsing', WebSearch: 'browsing', Agent: 'delegating',
 }
-const argOf = (input: Record<string, unknown>) =>
+export const argOf = (input: Record<string, unknown>) =>
   String(input.description ?? input.command ?? input.file_path ?? input.pattern ?? input.query ?? input.url ?? '').split('\n')[0]?.slice(0, 60) ?? ''
 
 const recs: AgentRec[] = []
+const byAgent = (agentId: string) => recs.find(x => x.agentId === agentId)
+const byTool = (toolUseId: string) => recs.find(x => x.toolUseId === toolUseId)
 
 export const live = (r: AgentRec) => r.status === 'running' || r.status === 'judging'
+/** The effort an agent (or main) runs on: what was sent, else what was decided. */
+export const shownEffort = (r: { sent?: Sent; decided?: Decision }) => r.sent ?? r.decided?.effort ?? undefined
 
 export const agents = {
   onCall(toolUseId: string, e: { description: string; subagent_type?: string; model?: string; effort?: Effort }): AgentRec {
@@ -54,18 +58,21 @@ export const agents = {
   },
   all: () => recs.filter(r => live(r) || Date.now() - (r.endedAt ?? 0) < main.settings.hideDone * 60_000),
   history: (): readonly AgentRec[] => recs,
-  byToolUseId: (id: string) => recs.find(x => x.toolUseId === id),
+  byToolUseId: byTool,
   link(toolUseId: string, r: { agentId?: string; model?: string }, parent?: string) {
-    const rec = recs.find(x => x.toolUseId === toolUseId)
+    const rec = byTool(toolUseId)
     if (rec && r.agentId) Object.assign(rec, { agentId: r.agentId, model: r.model ?? rec.model, parent })
   },
-  /** A subagent's tool call: what it is doing now. */
-  onTool(agentId: string, tool: string, input: Record<string, unknown>) {
-    const rec = recs.find(x => x.agentId === agentId)
-    if (rec) rec.doing = { verb: VERB[tool] ?? tool.toLowerCase(), what: argOf(input) }
+  /** A subagent's tool call: what it is doing now. True when that changed. */
+  onTool(agentId: string, tool: string, input: Record<string, unknown>): boolean {
+    const rec = byAgent(agentId)
+    const doing = { verb: VERB[tool] ?? tool.toLowerCase(), what: argOf(input) }
+    if (!rec || (rec.doing?.verb === doing.verb && rec.doing.what === doing.what)) return false
+    rec.doing = doing
+    return true
   },
   onAsk(agentId: string, toolUseId: string) {
-    const rec = recs.find(x => x.agentId === agentId)
+    const rec = byAgent(agentId)
     if (rec) rec.waiting = toolUseId
   },
   /** The asked call ran or was refused. */
@@ -74,7 +81,7 @@ export const agents = {
     if (rec) rec.waiting = undefined
     return !!rec
   },
-  byAgentId: (agentId: string) => recs.find(x => x.agentId === agentId),
+  byAgentId: byAgent,
   /** When the first request arrives before agent.spawn resolves, match by description and type from $.agent.list(). */
   match(agentId: string, list: readonly AgentInfo[]): AgentRec | undefined {
     const info = list.find(a => a.id === agentId)
@@ -93,15 +100,15 @@ export const agents = {
     rec.tokens = u.input_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens + u.output_tokens
   },
   onHold(agentId: string) {
-    const rec = recs.find(x => x.agentId === agentId)
+    const rec = byAgent(agentId)
     if (rec) rec.doing = { verb: 'waiting', what: 'on background work' }
   },
   onEnd(agentId: string, reason: string) {
-    const rec = recs.find(x => x.agentId === agentId)
+    const rec = byAgent(agentId)
     if (rec) Object.assign(rec, { status: reason === 'answer' ? 'done' : 'error', endedAt: Date.now(), waiting: undefined })
   },
   fail(toolUseId: string) {
-    const rec = recs.find(x => x.toolUseId === toolUseId)
+    const rec = byTool(toolUseId)
     if (rec && !rec.agentId) Object.assign(rec, { status: 'error', endedAt: Date.now() })
   },
 }
@@ -209,17 +216,21 @@ export type UiState = {
   docked?: boolean
 }
 
-const UI: UiState = { tab: 'agents', agentsView: 'board', opened: false, hintShown: false, hint: false, help: false, more: false, draft: {} }
+// Every field, optional ones as undefined, so a reset clears them too; a fresh draft object each time.
+const initialUi = (): UiState => ({
+  tab: 'agents', agentsView: 'board', peek: undefined, viewing: undefined, opened: false, hintShown: false, hint: false, rest: undefined, card: undefined,
+  help: false, more: false, draft: {}, columns: undefined, fullscreen: undefined, docked: undefined,
+})
 
 export const ui: UiState & { set(patch: Partial<UiState>): void } = {
-  ...UI,
+  ...initialUi(),
   set(patch) {
     Object.assign(ui, patch)
   },
 }
 
 export function resetState() {
-  ui.set({ ...UI, rest: undefined, peek: undefined, viewing: undefined, columns: undefined, fullscreen: undefined, docked: undefined, card: undefined, draft: {} })
+  ui.set(initialUi())
   recs.length = 0
   skillRecs.length = 0
   mainDone = false

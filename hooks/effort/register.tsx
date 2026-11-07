@@ -5,7 +5,7 @@ import { loadSettings } from './settings'
 import { runCommand } from './commands'
 import { contextFrom, judge, keepsEffort, namedEffort, withAttachments, withMidTurn, type Verdict } from './judge'
 import { agents, live, main, phase, resetState, skills, ui, type AgentRec } from './state'
-import { EFFORTS, isEffort, type Decision } from './types'
+import { isEffort, rankOf, type Decision } from './types'
 import { labelled, renderAgentRow } from './ui/row'
 import { autoOpen, PANE_ID, renderPane } from './ui/pane'
 import { redraw, toast } from './ui/status'
@@ -50,17 +50,26 @@ const SKILL_PATH = /^skills\/([^/]+)\/(?:SKILL\.md|playbooks\/([^/]+)\.md)$/
 const byPerson = (o: { kind: string } | undefined) => o?.kind === 'composer' || o?.kind === 'bridge' || o?.kind === 'sdk'
 const MUTATING = new Set(['set', 'auto', 'bar', 'bench'])
 
+function resetSession() {
+  stopPeek()
+  resetArt()
+  resetState()
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    stopPeek()
-    resetArt()
-    resetState()
+    resetSession()
     // $.fs does not expand ~.
-    const home = await $.env.get('HOME').catch(() => undefined)
-    const text = home ? await $.fs.read(`${home}/.claude/rules/pstack-models.md`).catch(() => '') : ''
+    const roles = $.env.get('HOME').catch(() => undefined)
+      .then(home => (home ? $.fs.read(`${home}/.claude/rules/pstack-models.md`).catch(() => '') : ''))
+    const [text, settings, language] = await Promise.all([
+      roles,
+      loadSettings($).catch(() => main.settings),
+      Promise.resolve().then(() => $.settings.read()).then(s => s.language).catch(() => undefined),
+    ])
     main.roles = parseModels(String(text ?? ''))
-    main.settings = await loadSettings($).catch(() => main.settings)
-    setDetectedLang(langFromSetting(await Promise.resolve().then(() => $.settings.read()).then(s => s.language).catch(() => undefined)))
+    main.settings = settings
+    setDetectedLang(langFromSetting(language))
     redraw($)
     return next(e)
   })
@@ -69,9 +78,7 @@ export const register: Register = on => {
   on('session.end', async ($, e, next) => {
     if (e.reason === 'clear' || e.reason === 'resume') {
       const kept = main.humanEffort
-      stopPeek()
-      resetArt()
-      resetState()
+      resetSession()
       main.humanEffort = kept
       redraw($)
     }
@@ -83,17 +90,17 @@ export const register: Register = on => {
     main.judgeDown = undefined   // a prompt that skips the judge must not keep the previous "judge down"
     ui.set({ rest: undefined })
     // Settings are shared by all sessions, so they are re-read on every prompt.
-    const s = (main.settings = await loadSettings($).catch(() => main.settings))
+    const [s, rows] = await Promise.all([loadSettings($).catch(() => main.settings), $.session.messages().catch(() => [])])
+    main.settings = s
     // Re-mark danger even on a short reply ("deploy prod"); the judgment carries over on short replies.
     main.danger = s.danger && isDangerous(e.text)
-    const rows = await $.session.messages().catch(() => [])
     const context = contextFrom((Array.isArray(rows) ? rows : []) as { role: string; text?: string }[])
     // "go", "ok", "yes" between two steps of work keep the effort already chosen; a message with an image is new work.
     if (main.judged && !e.attachments?.length && keepsEffort(e.text, context)) return next(e)
     // A lower call for a message typed mid-turn waits for the turn to end, so the running task keeps its effort; a higher one helps it now.
     const before = main.judged
     const settle = (v: Verdict | null) => {
-      const lower = e.turnId !== undefined && isEffort(main.sent) && (!v || EFFORTS.indexOf(v.effort) < EFFORTS.indexOf(main.sent))
+      const lower = e.turnId !== undefined && isEffort(main.sent) && (!v || rankOf(v.effort) < rankOf(main.sent))
       main.held = lower ? v : undefined
       main.judged = lower ? before : v
     }
@@ -132,8 +139,7 @@ export const register: Register = on => {
   on('tool.call', async ($, e, next) => {
     if (e.agentId) {
       const id = e.agentId
-      agents.onTool(id, e.tool, e as unknown as Record<string, unknown>)
-      redraw($)
+      if (agents.onTool(id, e.tool, e as unknown as Record<string, unknown>)) redraw($)
       try {
         return await next(e)
       } finally {
@@ -177,19 +183,19 @@ export const register: Register = on => {
     const starts = rec.decided.effort ?? main.sent
     if (starts) rec.label = `${e.description} · ${starts}`
     redraw($)
+    // If next throws or is refused, do not leave an agent that never started as running (the skill would never end).
+    const failed = () => {
+      agents.fail(e.tool_use_id)
+      redraw($)
+    }
     let r: Awaited<ReturnType<typeof next>>
     try {
       r = await next(rec.label ? { ...e, description: rec.label } : e)
     } catch (err) {
-      // If next throws, do not leave an agent that never started as running (the skill would never end).
-      agents.fail(e.tool_use_id)
-      redraw($)
+      failed()
       throw err
     }
-    if (r.deny || r.isError) {
-      agents.fail(e.tool_use_id)
-      redraw($)
-    }
+    if (r.deny || r.isError) failed()
     return r
   }).catch(($, e, next) => next(e))
 
@@ -246,7 +252,7 @@ export const register: Register = on => {
   on('turn.complete', async ($, e, next) => {
     // A subagent that ends a turn to wait on its own background work is still running; it gets another turn.
     const held = e.agentId && e.reason === 'answer' && (await $.agent.list().catch(() => [])).some(a => a.id === e.agentId && a.status === 'waiting')
-    if (e.agentId && held) agents.onHold(e.agentId)
+    if (held) agents.onHold(e.agentId)
     else if (e.agentId) agents.onEnd(e.agentId, e.reason)
     else {
       skills.mainTurn(false)

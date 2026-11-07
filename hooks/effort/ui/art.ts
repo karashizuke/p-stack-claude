@@ -9,14 +9,14 @@ export const ART_MIN_WIDTH = 90
 export const ART_FRAME_MS = 100
 
 export type ArtKind = 'still' | 'judging' | 'agents' | 'viewing'
-export type RasterCells = RasterProps['cells']
+type RasterCells = RasterProps['cells']
 
 export const MOVING: ReadonlySet<ArtKind> = new Set(['judging', 'agents', 'viewing'])
 
 export const EFFORT_COLOR: Record<string, string> = { low: '#8b948c', medium: '#4fb5a5', high: '#6fa0ff', xhigh: '#b38cff', max: '#ff8a5c' }
 // The band's frame and text on the terminal (effortless's dashboard colors), and its blue form while viewing an agent.
 export const BAND_BG = '#11376b'
-export const BAND_EDGE = '#3a78c4'
+const BAND_EDGE = '#3a78c4'
 export const BAND_TEXT = '#e6f0fb'
 export const VIEW_BG = '#0f1a22'
 export const VIEW_EDGE = '#2f5a7a'
@@ -49,6 +49,8 @@ const mix = (a: string, b: string, k: number) => {
   return x.map((v, i) => Math.round(v + (y[i] - v) * k)).reduce((n, v) => (n << 8) | v, 0) >>> 0
 }
 const pack = (h: string) => mix(h, h, 0)
+/** `a` moved toward `b` by share k, as #rrggbb. */
+export const mixHex = (a: string, b: string, k: number) => `#${mix(a, b, k).toString(16).padStart(6, '0')}`
 
 // A 5x4 critter standing on the horizon; it walks right swapping legs, and a waiting one stops with an arm up.
 const BODY = ['.bbb.', 'bebeb', 'bbbbb']
