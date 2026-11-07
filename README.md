@@ -6,6 +6,7 @@ Upstream already publishes a Claude Code build of pstack at [`harness/pstack/cla
 
 - Upstream documentation: [README.upstream.md](./README.upstream.md)
 - Synced upstream commit: [UPSTREAM_COMMIT](./UPSTREAM_COMMIT)
+- What changed in each sync: [UPSTREAM_LOG.md](./UPSTREAM_LOG.md)
 
 ## Install
 
@@ -32,19 +33,22 @@ The plugin name stays `pstack` on purpose. The skills refer to each other as `ps
 | Branch | Contents | Edit by hand? |
 | --- | --- | --- |
 | `upstream` | An exact copy of `harness/pstack/claude-code`. `README.md` is renamed to `README.upstream.md`, and `UPSTREAM_COMMIT` holds the upstream SHA. | No. Only `scripts/sync-upstream.sh` writes it. |
-| `main` | `upstream`, plus this README, the marketplace file, the sync script, and my local modifications. | Yes. |
+| `main` | `upstream`, plus this README, the sync log, the marketplace file, the sync script, and my local modifications. | Yes. |
 
 ## Sync with upstream
 
 ```bash
 scripts/sync-upstream.sh   # commits the latest upstream tree to the `upstream` branch
 git merge upstream         # on main; resolve conflicts if any
+# add an entry to the top of UPSTREAM_LOG.md, then commit it
 git push origin main upstream
 ```
 
 Then run `/plugin marketplace update karashizuke-pstack` in Claude Code, or turn on auto-update for this marketplace.
 
-The script exits with no commit when upstream has not changed.
+The script exits with no commit when `harness/pstack/claude-code` has not changed. Otherwise it prints the compare URL, the upstream commits, and the size of the change, which are the raw material for the log entry.
+
+Each log entry says what upstream added, changed, fixed, and removed, and what that means for this fork: conflicts, affected local modifications, and test results before and after the merge.
 
 ## Making changes
 
