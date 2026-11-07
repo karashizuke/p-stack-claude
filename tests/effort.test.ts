@@ -437,13 +437,14 @@ describe('status', () => {
 })
 
 describe('agent row', () => {
-  test('the Agent call carries the effort it starts on in its description', async ($, on) => {
+  test('the Agent call input passes through unchanged, so auto mode does not refuse it', async ($, on) => {
     world(on)
-    const sent: string[] = []
-    on('tool.call', (_$, e) => (sent.push(String((e as { description?: string }).description)), { result: 'ok', isError: false }) as never)
+    const sent: unknown[] = []
+    on('tool.call', (_$, e) => (sent.push(e), { result: 'ok', isError: false }) as never)
     await fresh($)
-    await $.tool.call({ tool: 'Agent', tool_use_id: 'd1', description: 'find callers', prompt: 'x', effort: 'high' } as never)
-    expect(sent.at(-1)).toBe('find callers · high')
+    const call = { tool: 'Agent', tool_use_id: 'd1', description: 'find callers', prompt: 'x', effort: 'high' }
+    await $.tool.call({ ...call } as never)
+    expect(sent.at(-1)).toMatchObject(call)
   })
   test('shows the role, model and sent effort', async ($, on) => {
     world(on)

@@ -179,9 +179,6 @@ export const register: Register = on => {
       await log($, `${e.tool_use_id} judged ${said(rec.judged)}`)
     }
     rec.decided = decideFor(rec, true, e.model ?? '')
-    // The transcript folds parallel and background agents into rows only the description reaches, so it carries the effort the agent starts on (the parent's when nothing is decided).
-    const starts = rec.decided.effort ?? main.sent
-    if (starts) rec.label = `${e.description} · ${starts}`
     redraw($)
     // If next throws or is refused, do not leave an agent that never started as running (the skill would never end).
     const failed = () => {
@@ -190,7 +187,8 @@ export const register: Register = on => {
     }
     let r: Awaited<ReturnType<typeof next>>
     try {
-      r = await next(rec.label ? { ...e, description: rec.label } : e)
+      // Pass the input through unchanged: auto mode refuses a call whose input a hook changed after review. Effort is set per request in turn.step, and the row shows it via ui.render.
+      r = await next(e)
     } catch (err) {
       failed()
       throw err

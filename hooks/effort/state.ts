@@ -11,7 +11,6 @@ export type AgentRec = {
   toolUseId: string
   agentId?: string
   description: string
-  label?: string   // the description as sent, with the effort the agent starts on
   role?: string
   model?: string
   type: string
@@ -85,7 +84,7 @@ export const agents = {
   /** When the first request arrives before agent.spawn resolves, match by description and type from $.agent.list(). */
   match(agentId: string, list: readonly AgentInfo[]): AgentRec | undefined {
     const info = list.find(a => a.id === agentId)
-    const rec = info && recs.find(x => !x.agentId && (x.label ?? x.description) === info.description && x.type === info.type)
+    const rec = info && recs.find(x => !x.agentId && x.description === info.description && x.type === info.type)
     if (rec) rec.agentId = agentId
     return rec
   },
