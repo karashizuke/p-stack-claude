@@ -1,5 +1,4 @@
 {
-  "modules": ["./effort/register.tsx"],
   "hooks": {
     "SessionStart": [
       {

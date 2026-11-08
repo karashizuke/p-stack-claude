@@ -11,5 +11,3 @@ If the intent is already specific, name the matching command instead: `/pstack:t
 Inside a pstack skill that the user started, follow that skill, including each step that tells you to read another SKILL.md.
 
 User instructions (CLAUDE.md, AGENTS.md, direct requests) take precedence.
-
-When a pstack skill starts a subagent with the Agent tool, begin its `description` with the role name in brackets, exactly as the text before the colon in `~/.claude/rules/pstack-models.md` (for example `[interrogate reviewers] Reviewer A`). Use a role name even when that file has no line for it (for example `[verifier] Mac checks`).
