@@ -4,6 +4,42 @@
 
 これより前の同期は記録していません。
 
+## 2026-11-16: cursor/plugins@bf0c7cd (0.15.36 → 0.15.42)
+
+差分は [bb68f23...bf0c7cd](https://github.com/cursor/plugins/compare/bb68f2365eceafa0cb2d253112f675acf5f144cc...bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7) です。このツリーに触れた commit は1件 (#1236) で、変更は55ファイル (+372 / -1029) です。
+
+### 既定モデルの変更
+
+- `setup-pstack` の既定値から grok を外しました。コードの委譲 (feature、refactoring、bug-fix、perf-issue、hillclimb) と判断・文章は `claude-opus-5-5-xhigh`、`hardest tasks` は `claude-fable-5-2-max`、`reflect tooling` と `swarm workers` は `claude-opus-5-5-high-fast` です。
+- panel (arena runners、cross-judge pool、architect runners、interrogate reviewers) の既定は `claude-fable-5-2-high`、`claude-opus-5-5-high-fast`、`gemini-4-carbon-high` の3席です。
+- 生成するルールに `# defaults: 2` 行が入ります。この行がない古いルールを再設定すると、`grok-*` の値だけを新しい既定値に置き換え、ほかの値は残します。
+- Fable は arena の Phase A で独立したモデルファミリーとして扱われます。
+
+### 動作が変わったスキル
+
+- `how`。explorer と explainer の2段構成をやめ、1つの subagent が調べて説明します。`how explorer` と `how explainer` のロールはなくなりました。
+- `why`。MCP ごとの investigator と synthesizer をやめ、1ファイルの手順になりました。commit と PR の議論を中心に答え、それで足りないときだけ他の情報源を見ます。`why investigators` と `why synthesizer` のロールはなくなりました。
+- `poteto-mode` と各 playbook。`how` スキルを呼ぶ代わりに「対象のサブシステムを追跡する」と書くようになりました。役割ごとの既定 effort は xhigh か high で、`hardest tasks` だけ max です。
+- `recall`。共有記録の調査で、`why` の investigator を借りずに情報源ごとに subagent を起動します。
+- `sharpen`。実験で決められる選択は試作して推奨させ、好みの選択だけをユーザーに残すプロンプトを書きます。
+- `reflect`、`architect`、`arena`、`blast-radius` などは、既定モデル名の更新が中心です。
+
+### 修正
+
+- `statechart`。SANY が仕様を読めないとき、SANY を再実行して構文エラーの本文を表示します。Mermaid 出力の変更とテスト追加もあります。
+
+### 削除
+
+- `skills/how/references/` の2ファイルと、`skills/why/references/` の11ファイル。
+
+### このフォークへの影響
+
+- 衝突は `plugin.json`、`.claude-plugin/plugin.json`、`skills/setup-pstack/SKILL.md` の3件でした。
+- バージョンは `0.15.42-k.1` にしました。
+- `setup-pstack` の panel 4行は、ローカルの `opus xhigh, fable xhigh` (interrogate は `sonnet xhigh` を加えた3席) を残しました。`swarm workers` はローカルで変えていなかったので、本家の新しい既定値 `claude-opus-5-5-high-fast` を採りました。
+- `hooks/` は本家の変更と重なっていません。SessionStart フックが案内する `/pstack:how` と `/pstack:why` は引き続き存在します。
+- `statechart` のテストは実行していません。このフォークで変更していないファイルだけが対象です。
+
 ## 2026-11-05: cursor/plugins@bb68f23 (0.15.26 → 0.15.36)
 
 差分は [8838150...bb68f23](https://github.com/cursor/plugins/compare/8838150c6b4829ea3c01782631213776d86df14a...bb68f2365eceafa0cb2d253112f675acf5f144cc) です。このツリーに触れた commit は27件、変更は452ファイル (+20420 / -3491) で、うち407ファイルは `skills/statechart/` の追加です。
