@@ -4,6 +4,45 @@
 
 これより前の同期は記録していません。
 
+## 2026-11-21: cursor/plugins@aaeb0ea (0.15.42 → 0.15.46)
+
+差分は [bf0c7cd...aaeb0ea](https://github.com/cursor/plugins/compare/bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7...aaeb0ea3a0584995aa8f55ce44c6c5259414b896) です。このツリーに触れた commit は4件 (#1249, #1283, #1284, #1292) で、変更は78ファイル (+358 / -1415) です。
+
+### 既定モデルの変更
+
+- どのロールも `xhigh` を超えて動かなくなりました。`setup-pstack` の budget から `unlimited` がなくなり、`# budget: unlimited` は `large` に置き換わります (#1249)。
+- コード・判断・文章の既定は `claude-opus-5-5-xhigh-fast` です。Opus 5.5 は常に `-fast` slug を使います (#1249)。
+- Fable 5.2 は panel の外では、ユーザーが指名したときか、同じ brief で Opus 5.5 xhigh が2回失敗したときだけ動きます。`hardest tasks` ロールはなくなりました (#1249)。
+- panel の Gemini 席は `gemini-4-neon-xhigh` になりました (#1283, #1284)。`arena cross-judge pool` の既定から Fable を外しました。Fable と Opus は同じベンダーだからです。
+- 生成するルールの行が `# defaults: 3` になりました。
+- `agents/poteto-agent.md` に `model: claude-opus-5-5-xhigh-fast` が入りました。Claude Code の adapter は、`pstack:poteto-agent` を起動する Agent 呼び出しで必ず `model` と `effort` を渡すよう指示しています。
+
+### 動作が変わったスキル (#1249)
+
+- `poteto-mode`。trigger の一覧と Subagents の節を大幅に短くしました。「Writing the reply」の節は削除されました。agent を起動するとき、kickoff の1行目で新しい `skills/poteto-mode/worker.md` を読ませます。
+- `architect`。Phase A〜E の手順と runner の arena をやめ、短い指針だけになりました。大きい設計や争点のある設計は `arena` を使います。`architect runners` ロールはなくなりました。
+- `reflect`。4種の reviewer と synthesizer をやめ、1ファイルの手順になりました。`reflect tooling` と `reflect judgment, divergent, synthesizer` のロールはなくなりました。
+- `multi-phase-plan`、`babysit`、`opening-a-pr` の各 playbook を短くしました。
+- principle 系スキル、`technical-writing`、`unslop` の本文を短くしました。
+
+### 修正
+
+- `statechart`。ネイティブ Windows で動き、TLC 出力の `\r\n` を読めるようになりました (#1292)。`janitor.ts` と `kill.ts` を追加しました。
+
+### 削除
+
+- `orchestrate` playbook。playbook は22個になりました。
+- `skills/architect/references/` の3ファイル、`skills/reflect/references/` の4ファイル、`skills/poteto-mode/scripts/check-plan.mjs` とそのテスト。
+
+### このフォークへの影響
+
+- 衝突は `plugin.json`、`.claude-plugin/plugin.json`、`skills/setup-pstack/SKILL.md` の3件でした。
+- バージョンは `0.15.46-k.1` にしました。
+- `setup-pstack` の step 5 は本家の新しい形を採り、panel 3行 (`arena runners`、`arena cross-judge pool`、`interrogate reviewers`) だけローカルの値を残しました。本家が廃止した `architect runners`、`hardest tasks`、`reflect` の各行は消えます。
+- `arena cross-judge pool` はローカルの `opus xhigh, fable xhigh` のままです。どちらも親と同じ Claude ベンダーなので judge は動かず、コーディネーターが単独で base を選びます。これはマージ前と同じ動作です。
+- `hooks/` は本家の変更と重なっていません。SessionStart フックが案内する `/pstack:architect` などのコマンドはすべて残っています。
+- `statechart` のテスト (`test/messages.test.ts`、`test/cli.test.ts`) を実行しました。失敗は symlink 経由で launcher を起動する1件だけで、マージ前の `fc326b6` でも同じように失敗します。
+
 ## 2026-11-16: cursor/plugins@bf0c7cd (0.15.36 → 0.15.42)
 
 差分は [bb68f23...bf0c7cd](https://github.com/cursor/plugins/compare/bb68f2365eceafa0cb2d253112f675acf5f144cc...bf0c7cd80abdbf7fe47b634978a7d1b4071f71a7) です。このツリーに触れた commit は1件 (#1236) で、変更は55ファイル (+372 / -1029) です。
