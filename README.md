@@ -61,7 +61,7 @@ Each log entry says what upstream added, changed, fixed, and removed, and what t
 | File | Change | Why |
 | --- | --- | --- |
 | `hooks/hooks.json`, `hooks/session-start-context.md` | Added. A `SessionStart` hook that tells the agent to suggest `/pstack:poteto-mode` in one sentence for multi-file, design, or unknown-cause tasks, or a more specific command such as `/pstack:tdd`, and then do the task as usual. | Upstream makes every pstack skill except `setup-pstack` typed-only (`disable-model-invocation: true`), and its Claude Code tree has no hooks, so nothing tells the user which command fits. Adapted from [michael-denyer/pstack-claude](https://github.com/michael-denyer/pstack-claude) (MIT), which removes that flag and lets the agent invoke the skills. |
-| `skills/setup-pstack/SKILL.md` (step 5) | The panel defaults are `opus xhigh, fable xhigh`, with `sonnet xhigh` added to `interrogate reviewers`. | In Claude Code the upstream `grok-4.7-xhigh-fast` panel seat becomes the parent model, so the panel ran Opus twice. Haiku never helped and Sonnet design candidates were never picked. |
+| `skills/setup-pstack/SKILL.md` (step 5) | The panel defaults (`arena runners`, `arena cross-judge pool`) are `opus xhigh, fable xhigh`, with `sonnet xhigh` added to `interrogate reviewers`. | In Claude Code the upstream `grok-4.7-xhigh-fast` panel seat becomes the parent model, so the panel ran Opus twice. Haiku never helped and Sonnet design candidates were never picked. |
 
 ## License
 
