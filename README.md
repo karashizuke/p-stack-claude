@@ -54,13 +54,14 @@ Each log entry says what upstream added, changed, fixed, and removed, and what t
 
 - To keep merges clean, add new files, such as new skills under `skills/`, instead of editing upstream files.
 - When you must edit an upstream file, record it in the table below so you can review it during a merge.
-- Do not bump `version` in `plugin.json` on `main`. Upstream bumps it on almost every release, so a local bump conflicts on every sync.
+- `version` in both `plugin.json` files is upstream's number plus `-k.N`. Installed copies update only when the string changes, so bump N for every local change that should reach them, and reset to `-k.1` on each upstream sync. Never reuse a string that `main` has already shipped.
 
 ## Local modifications
 
 | File | Change | Why |
 | --- | --- | --- |
 | `hooks/hooks.json`, `hooks/session-start-context.md` | Added. A `SessionStart` hook that tells the agent to suggest `/pstack:poteto-mode` in one sentence for multi-file, design, or unknown-cause tasks, or a more specific command such as `/pstack:tdd`, and then do the task as usual. | Upstream makes every pstack skill except `setup-pstack` typed-only (`disable-model-invocation: true`), and its Claude Code tree has no hooks, so nothing tells the user which command fits. Adapted from [michael-denyer/pstack-claude](https://github.com/michael-denyer/pstack-claude) (MIT), which removes that flag and lets the agent invoke the skills. |
+| `skills/deslop/SKILL.md` | Added. Copied from [cursor-team-kit/skills/deslop](https://github.com/cursor/plugins/tree/main/cursor-team-kit/skills/deslop) (MIT, Cursor), with a source comment. Left model-invocable, as in the original. | `poteto-mode` and its PR playbooks call `/deslop` before commit, but it ships in `cursor-team-kit`, which has no Claude Code build, so agents reported the skill as missing. |
 | `skills/setup-pstack/SKILL.md` (step 5) | The panel defaults (`arena runners`, `arena cross-judge pool`) are `opus xhigh, fable xhigh`, with `sonnet xhigh` added to `interrogate reviewers`. | In Claude Code the upstream `grok-4.7-xhigh-fast` panel seat becomes the parent model, so the panel ran Opus twice. Haiku never helped and Sonnet design candidates were never picked. |
 
 ## License
